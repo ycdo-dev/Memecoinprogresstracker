@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PEPE2 Campaign Tracker Dashboard - Monitor and manage campaign progress">
+    <meta name="theme-color" content="#4CAF50">
+    <title>PEPE2 Campaign Tracker</title>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" as="script">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" defer></script>
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --secondary: #2196F3;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --danger: #f44336;
+            --dark: #1a1a1a;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            line-height: 1.6;
+            background: #f0f2f5;
+            color: var(--dark);
+            min-width: 320px;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--dark), var(--primary));
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content {
+            flex-grow: 1;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #1976D2;
+            transform: translateY(-1px);
+        }
+
+        .btn:focus {
+            outline: 2px solid white;
+            outline-offset: 2px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .phase-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .phase-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .phase-card.active {
+            border: 2px solid var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .phase-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .phase-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: white;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 1rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+
+        .action-list {
+            margin-top: 1rem;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--light);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .action-item:hover {
+            background: #e9ecef;
+        }
+
+        .action-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .status-pending {
+            background: var(--gray);
+        }
+
+        .status-in-progress {
+            background: var(--warning);
+        }
+
+        .status-completed {
+            background: var(--success);
+        }
+
+        .budget-overview {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .budget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .budget-card {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .budget-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .budget-amount {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+
+        .daily-progress {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin-top: 1rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--primary);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding-left: 1rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0.5rem;
+            width: 1rem;
+            height: 1rem;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .timeline-item ul {
+            list-style: none;
+            margin-top: 0.5rem;
+        }
+
+        .timeline-item li {
+            margin-bottom: 0.25rem;
+            color: var(--gray);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: 1rem;
+            }
+
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .btn-group {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .phase-overview {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .dashboard {
+                padding: 0.5rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .timeline {
+                padding-left: 1rem;
+            }
+
+            .metric-value {
+                font-size: 1.5rem;
+            }
+
+            .budget-amount {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <div class="header-content">
+                <h1>PEPE2 Campaign Tracker</h1>
+                <p>Campaign Day: <span id="currentDay">1</span>/30</p>
+            </div>
+            <div class="btn-group">
+                <button id="advanceDay" class="btn" aria-label="Advance to next day">
+                    <i class="fas fa-forward" aria-hidden="true"></i> 
+                    <span>Advance Day</span>
+                </button>
+                <button id="toggleDemo" class="btn" aria-label="Toggle demo mode">
+                    <i class="fas fa-play" aria-hidden="true"></i>
+                    <span>Toggle Demo</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="phase-overview">
+            <div class="phase-card active">
+                <div class="phase-header">
+                    <div class="phase-icon">
+                        <i class="fas fa-rocket" aria-hidden="true"></i>
+                    </div>
+                    <h2>Pre-Launch</h2>
+                </div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill"></div>
+                </div>
+                <div class="action-list">
+                    <div class="action-item">
+                        <span class="action-status status-pending" aria-label="Status: Pending"></span>
+                        <span>Community Setup</span>
+                    </div>
+                    <div class="action-item">
+                        <span class="action-status status-pending" aria-label="Status: Pending"></span>
+                        <span>Initial Marketing</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="phase-card">
+                <div class="phase-header">
+                    <div class="phase-icon">
+                        <i class="fas fa-chart-line" aria-hidden="true"></i>
+                    </div>
+                    <h2>Growth</h2>
+                </div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill"></div>
+                </div>
+                <div class="action-list">
+                    <div class="action-item">
+                        <span class="action-status status-pending" aria-label="Status: Pending"></span>
+                        <span>Community Growth</span>
+                    </div>
+                    <div class="action-item">
+                        <span class="action-status status-pending" aria-label="Status: Pending"></span>
+                        <span>Engagement Push</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="phase-card">
+                <div class="phase-header">
+                    <div class="phase-icon">
+                        <i class="fas fa-flag-checkered" aria-hidden="true"></i>
+                    </div>
+                    <h2>Launch</h2>
+                </div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill"></div>
+                </div>
+                <div class="action-list">
+                    <div class="action-item">
+                        <span class="action-status status-pending" aria-label="Status: Pending"></span>
+                        <span>Launch Preparation</span>
+                    </div>
+                    <div class="action-item">
+                        <span class="action-status status-pending" aria-label="Status: Pending"></span>
+                        <span>Post-Launch Support</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="phase-card">
+                <div class="phase-header">
+                    <div class="phase-icon">
+                        <i class="fas fa-chart-bar" aria-hidden="true"></i>
+                    </div>
+                    <h2>Sustainability</h2>
+                </div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill"></div>
+                </div>
+                <div class="action-list">
+                    <div class="action-item">
+                        <span class="action-status status-pending" aria-label="Status: Pending"></span>
+                        <span>Market Stabilization</span>
+                    </div>
+                    <div class="action-item">
+                        <span class="action-status status-pending" aria-label="Status: Pending"></span>
+                        <span>Long-term Growth</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>Telegram Members</h3>
+                <div class="metric-value">0</div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill"></div>
+                </div>
+                <p>Target: 5,000</p>
+            </div>
+            <div class="metric-card">
+                <h3>Twitter Followers</h3>
+                <div class="metric-value">0</div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill"></div>
+                </div>
+                <p>Target: 3,000</p>
+            </div>
+            <div class="metric-card">
+                <h3>Daily Active Users</h3>
+                <div class="metric-value">0</div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill"></div>
+                </div>
+                <p>Target: 500</p>
+            </div>
+            <div class="metric-card">
+                <h3>Trading Volume</h3>
+                <div class="metric-value">$0</div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill"></div>
+                </div>
+                <p>Target: $100K</p>
+            </div>
+        </div>
+
+        <div class="budget-overview">
+            <h2>Budget Allocation</h2>
+            <div class="budget-grid">
+                <div class="budget-card">
+                    <h3>Facebook Ads</h3>
+                    <div class="budget-amount">$4,000</div>
+                    <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <p>Spent: $0</p>
+                </div>
+                <div class="budget-card">
+                    <h3>Influencer Marketing</h3>
+                    <div class="budget-amount">$3,000</div>
+                    <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <p>Spent: $0</p>
+                </div>
+                <div class="budget-card">
+                    <h3>Community Building</h3>
+                    <div class="budget-amount">$2,000</div>
+                    <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <p>Spent: $0</p>
+                </div>
+                <div class="budget-card">
+                    <h3>Technical & Reserve</h3>
+                    <div class="budget-amount">$1,000</div>
+                    <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <p>Spent: $0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="daily-progress">
+            <h2>Recent Activity</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>Campaign Start</h4>
+                    <p>Initializing campaign tracking...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Campaign Tracker Class
+        class PepeCampaignTracker {
+            constructor() {
+                this.totalBudget = 10000;
+                this.currentDay = 0;
+                this.initializePhases();
+                this.metrics = {
+                    telegramMembers: 0,
+                    twitterFollowers: 0,
+                    dailyActiveUsers: 0,
+                    tradingVolume: 0
+                };
+            }
+
+            initializePhases() {
+                this.phases = [
+                    {
+                        name: "Pre-Launch",
+                        startDay: 1,
+                        endDay: 7,
+                        actions: [
+                            { name: "Community Setup", status: "pending", startDay: 1, endDay: 3 },
+                            { name: "Initial Marketing", status: "pending", startDay: 4, endDay: 7 }
+                        ]
+                    },
+                    {
+                        name: "Growth",
+                        startDay: 8,
+                        endDay: 14,
+                        actions: [
+                            { name: "Community Growth", status: "pending", startDay: 8, endDay: 10 },
+                            { name: "Engagement Push", status: "pending", startDay: 11, endDay: 14 }
+                        ]
+                    },
+                    {
+                        name: "Launch",
+                        startDay: 15,
+                        endDay: 20,
+                        actions: [
+                            { name: "Launch Preparation", status: "pending", startDay: 15, endDay: 17 },
+                            { name: "Post-Launch Support", status: "pending", startDay: 18, endDay: 20 }
+                        ]
+                    },
+                    {
+                        name: "Sustainability",
+                        startDay: 21,
+                        endDay: 30,
+                        actions: [
+                            { name: "Market Stabilization", status: "pending", startDay: 21, endDay: 25 },
+                            { name: "Long-term Growth", status: "pending", startDay: 26, endDay: 30 }
+                        ]
+                    }
+                ];
+            }
+
+            advanceDay() {
+                if (this.currentDay >= 30) return null;
+                this.currentDay++;
+                this.updatePhaseStatus();
+                this.updateMetrics();
+                return this.getProgress();
+            }
+
+            updatePhaseStatus() {
+                const currentPhase = this.getCurrentPhase();
+                if (currentPhase) {
+                    currentPhase.actions.forEach(action => {
+                        if (this.currentDay >= action.startDay && this.currentDay <= action.endDay) {
+                            action.status = 'in-progress';
+                        } else if (this.currentDay > action.endDay) {
+                            action.status = 'completed';
+                        }
+                    });
+                }
+            }
+
+            updateMetrics() {
+                const phase = this.getCurrentPhase();
+                if (!phase) return;
+
+                const phaseProgress = (this.currentDay - phase.startDay) / (phase.endDay - phase.startDay);
+                const growthRate = 0.15; // 15% daily growth rate
+
+                // Update metrics based on current phase with safety checks
+                switch (phase.name) {
+                    case "Pre-Launch":
+                        this.metrics.telegramMembers = Math.max(0, this.metrics.telegramMembers + 200 * (1 + phaseProgress));
+                        this.metrics.twitterFollowers = Math.max(0, this.metrics.twitterFollowers + 200 * (1 + phaseProgress));
+                        break;
+                    case "Growth":
+                        this.metrics.telegramMembers = Math.max(0, this.metrics.telegramMembers * (1 + growthRate * phaseProgress));
+                        this.metrics.twitterFollowers = Math.max(0, this.metrics.twitterFollowers * (1 + growthRate * phaseProgress));
+                        this.metrics.dailyActiveUsers = Math.max(0, this.metrics.dailyActiveUsers + 50 * (1 + phaseProgress));
+                        break;
+                    case "Launch":
+                        this.metrics.telegramMembers = Math.max(0, this.metrics.telegramMembers * (1 + growthRate * phaseProgress));
+                        this.metrics.twitterFollowers = Math.max(0, this.metrics.twitterFollowers * (1 + growthRate * phaseProgress));
+                        this.metrics.dailyActiveUsers = Math.max(0, this.metrics.dailyActiveUsers + 100 * (1 + phaseProgress));
+                        this.metrics.tradingVolume = Math.max(0, this.metrics.tradingVolume + 10000 * (1 + phaseProgress));
+                        break;
+                    case "Sustainability":
+                        this.metrics.tradingVolume = Math.max(0, this.metrics.tradingVolume * (1 + growthRate * phaseProgress));
+                        this.metrics.dailyActiveUsers = Math.max(0, this.metrics.dailyActiveUsers * (1 + 0.05 * phaseProgress));
+                        break;
+                }
+            }
+
+            getCurrentPhase() {
+                return this.phases.find(phase => 
+                    this.currentDay >= phase.startDay && this.currentDay <= phase.endDay
+                );
+            }
+
+            getProgress() {
+                return {
+                    currentDay: this.currentDay,
+                    currentPhase: this.getCurrentPhase(),
+                    metrics: this.metrics,
+                    budgetSpent: this.calculateBudgetSpent()
+                };
+            }
+
+            calculateBudgetSpent() {
+                return Math.min(this.totalBudget, (this.currentDay / 30) * this.totalBudget);
+            }
+
+            getPhaseProgress(phaseName) {
+                const phase = this.phases.find(p => p.name === phaseName);
+                if (!phase) return 0;
+                
+                if (this.currentDay < phase.startDay) return 0;
+                if (this.currentDay > phase.endDay) return 100;
+                
+                return Math.min(100, ((this.currentDay - phase.startDay) / (phase.endDay - phase.startDay)) * 100);
+            }
+        }
+
+        // Dashboard Controller
+        class DashboardController {
+            constructor() {
+                this.tracker = new PepeCampaignTracker();
+                this.demoInterval = null;
+                this.initializeEventListeners();
+                this.updateDashboard();
+            }
+
+            initializeEventListeners() {
+                const advanceDayBtn = document.getElementById('advanceDay');
+                const toggleDemoBtn = document.getElementById('toggleDemo');
+
+                if (advanceDayBtn) {
+                    advanceDayBtn.addEventListener('click', () => {
+                        this.advanceDay();
+                    });
+                }
+
+                if (toggleDemoBtn) {
+                    toggleDemoBtn.addEventListener('click', () => {
+                        this.toggleDemo();
+                    });
+                }
+            }
+
+            toggleDemo() {
+                const toggleBtn = document.getElementById('toggleDemo');
+                if (!toggleBtn) return;
+
+                if (this.demoInterval) {
+                    clearInterval(this.demoInterval);
+                    this.demoInterval = null;
+                    toggleBtn.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i> <span>Start Demo</span>';
+                } else {
+                    this.demoInterval = setInterval(() => {
+                        if (this.tracker.currentDay >= 30) {
+                            this.toggleDemo();
+                            return;
+                        }
+                        this.advanceDay();
+                    }, 1000);
+                    toggleBtn.innerHTML = '<i class="fas fa-pause" aria-hidden="true"></i> <span>Stop Demo</span>';
+                }
+            }
+
+            advanceDay() {
+                if (this.tracker.currentDay >= 30) return;
+                const progress = this.tracker.advanceDay();
+                if (progress) {
+                    this.updateDashboard(progress);
+                }
+            }
+
+            updateDashboard(progress = this.tracker.getProgress()) {
+                try {
+                    this.updateCurrentDay(progress);
+                    this.updatePhases(progress);
+                    this.updateMetrics(progress);
+                    this.updateBudget(progress);
+                    this.updateTimeline(progress);
+                } catch (error) {
+                    console.error('Error updating dashboard:', error);
+                }
+            }
+
+            updateCurrentDay(progress) {
+                const dayElement = document.getElementById('currentDay');
+                if (dayElement) {
+                    dayElement.textContent = progress.currentDay;
+                }
+            }
+
+            updatePhases(progress) {
+                const phases = ['Pre-Launch', 'Growth', 'Launch', 'Sustainability'];
+                
+                phases.forEach(phaseName => {
+                    const phaseProgress = this.tracker.getPhaseProgress(phaseName);
+                    const phaseCard = Array.from(document.querySelectorAll('.phase-card'))
+                        .find(card => card.querySelector('h2')?.textContent === phaseName);
+                    
+                    if (phaseCard) {
+                        const progressBar = phaseCard.querySelector('.progress-fill');
+                        if (progressBar) {
+                            progressBar.style.width = `${phaseProgress}%`;
+                        }
+
+                        const progressBarContainer = phaseCard.querySelector('.progress-bar');
+                        if (progressBarContainer) {
+                            progressBarContainer.setAttribute('aria-valuenow', phaseProgress);
+                        }
+
+                        phaseCard.classList.toggle('active', 
+                            progress.currentPhase?.name === phaseName);
+
+                        if (progress.currentPhase?.name === phaseName) {
+                            const actions = progress.currentPhase.actions;
+                            const actionElements = phaseCard.querySelectorAll('.action-item');
+                            
+                            actions.forEach((action, index) => {
+                                const actionElement = actionElements[index];
+                                if (actionElement) {
+                                    const statusElement = actionElement.querySelector('.action-status');
+                                    if (statusElement) {
+                                        statusElement.className = `action-status status-${action.status}`;
+                                        statusElement.setAttribute('aria-label', `Status: ${action.status}`);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+
+            updateMetrics(progress) {
+                if (!progress?.metrics) return;
+
+                const metrics = {
+                    'Telegram Members': { value: progress.metrics.telegramMembers, target: 5000 },
+                    'Twitter Followers': { value: progress.metrics.twitterFollowers, target: 3000 },
+                    'Daily Active Users': { value: progress.metrics.dailyActiveUsers, target: 500 },
+                    'Trading Volume': { value: progress.metrics.tradingVolume, target: 100000, format: true }
+                };
+
+                Object.entries(metrics).forEach(([name, data]) => {
+                    const card = Array.from(document.querySelectorAll('.metric-card'))
+                        .find(card => card.querySelector('h3')?.textContent === name);
+                    
+                    if (card) {
+                        const valueElement = card.querySelector('.metric-value');
+                        const progressBar = card.querySelector('.progress-fill');
+                        const progressBarContainer = card.querySelector('.progress-bar');
+                        
+                        if (valueElement) {
+                            const formattedValue = data.format ? 
+                                `$${Math.round(data.value).toLocaleString()}` : 
+                                Math.round(data.value).toLocaleString();
+                            valueElement.textContent = formattedValue;
+                        }
+                        
+                        if (progressBar) {
+                            const progressPercent = Math.min(100, (data.value / data.target)* 100);
+                            progressBar.style.width = `${progressPercent}%`;
+                            
+                            if (progressBarContainer) {
+                                progressBarContainer.setAttribute('aria-valuenow', progressPercent);
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateBudget(progress) {
+                const { budgetSpent } = progress;
+                const budgetCategories = {
+                    'Facebook Ads': { total: 4000, spent: budgetSpent * 0.4 },
+                    'Influencer Marketing': { total: 3000, spent: budgetSpent * 0.3 },
+                    'Community Building': { total: 2000, spent: budgetSpent * 0.2 },
+                    'Technical & Reserve': { total: 1000, spent: budgetSpent * 0.1 }
+                };
+
+                Object.entries(budgetCategories).forEach(([category, data]) => {
+                    const card = Array.from(document.querySelectorAll('.budget-card'))
+                        .find(card => card.querySelector('h3')?.textContent === category);
+                    
+                    if (card) {
+                        const spentElement = card.querySelector('p');
+                        const progressBar = card.querySelector('.progress-fill');
+                        const progressBarContainer = card.querySelector('.progress-bar');
+                        
+                        if (spentElement) {
+                            spentElement.textContent = `Spent: $${Math.round(data.spent).toLocaleString()}`;
+                        }
+                        
+                        if (progressBar) {
+                            const progressPercent = Math.min(100, (data.spent / data.total) * 100);
+                            progressBar.style.width = `${progressPercent}%`;
+                            
+                            if (progressBarContainer) {
+                                progressBarContainer.setAttribute('aria-valuenow', progressPercent);
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateTimeline(progress) {
+                const timelineContainer = document.querySelector('.timeline');
+                if (!timelineContainer) return;
+
+                const currentPhase = progress.currentPhase;
+                if (!currentPhase) return;
+
+                const timelineItem = document.createElement('div');
+                timelineItem.className = 'timeline-item';
+                
+                const activeActions = currentPhase.actions.filter(
+                    action => action.status === 'in-progress'
+                );
+
+                const metrics = progress.metrics;
+                const formattedVolume = metrics.tradingVolume > 0 ? 
+                    `$${Math.round(metrics.tradingVolume).toLocaleString()}` : 
+                    '$0';
+
+                timelineItem.innerHTML = `
+                    <h4>Day ${progress.currentDay}: ${currentPhase.name}</h4>
+                    <p>Active Tasks: ${activeActions.map(action => action.name).join(', ') || 'None'}</p>
+                    <ul>
+                        <li>Telegram: ${Math.round(metrics.telegramMembers).toLocaleString()} members</li>
+                        <li>Trading Volume: ${formattedVolume}</li>
+                    </ul>
+                `;
+
+                // Keep timeline items limited to most recent 5
+                const existingItems = timelineContainer.querySelectorAll('.timeline-item');
+                if (existingItems.length >= 5) {
+                    timelineContainer.removeChild(existingItems[existingItems.length - 1]);
+                }
+
+                timelineContainer.insertBefore(timelineItem, timelineContainer.firstChild);
+            }
+        }
+
+        // Initialize dashboard when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                new DashboardController();
+            } catch (error) {
+                console.error('Error initializing dashboard:', error);
+            }
+        });
+
+        // Error handling for Font Awesome
+        window.addEventListener('error', function(e) {
+            if (e.target.tagName === 'SCRIPT' && e.target.src.includes('font-awesome')) {
+                console.warn('Font Awesome failed to load. Falling back to text labels.');
+                document.querySelectorAll('.fas').forEach(icon => {
+                    const label = document.createElement('span');
+                    label.textContent = icon.getAttribute('aria-label') || icon.className.split('-').pop();
+                    icon.parentNode.replaceChild(label, icon);
+                });
+            }
+        }, true);
+    </script>
+</body>
+</html>
